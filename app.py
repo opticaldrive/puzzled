@@ -6,5 +6,5 @@ print(__name__)
 
 @app.route('/')
 def home():
-    return "Hello world"
+    return render_template('index.html', title = 'Connect 4!')
 
