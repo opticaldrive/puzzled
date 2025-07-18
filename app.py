@@ -102,4 +102,4 @@ def handle_clear(data):
     emit('clear_canvas', data, room=whiteboard_id)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5001)
+    socketio.run(app, debug=True, port=5001, allow_unsafe_werkzeug=True )
