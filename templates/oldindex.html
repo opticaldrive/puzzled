@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Collaborative Whiteboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Collaborative Whiteboard</h1>
+        <div class="toolbar">
+            <input type="color" id="colorPicker" value="#000000">
+            <input type="range" id="lineWidth" min="1" max="20" value="5">
+            <button id="clearBtn">Clear Canvas</button>
+        </div>
+        <canvas id="whiteboard" width="800" height="600"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <script>
+        // Explicitly specify transport methods
+        const socket = io({
+            transports: ['polling', 'websocket'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
+        });
+    </script>
+
+    <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
+</body>
+</html>

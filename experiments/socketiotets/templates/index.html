@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SocketIO Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        #messages { border: 1px solid #ccc; padding: 1em; height: 300px; overflow-y: auto; }
+        #inputArea { margin-top: 1em; }
+        #errors { color: red; margin-top: 1em; }
+    </style>
+</head>
+<body>
+    <h1>SocketIO Test</h1>
+    <div id="messages"></div>
+    <div id="inputArea">
+        <input type="text" id="messageInput" placeholder="Type a message..." />
+        <button id="sendBtn">Send</button>
+    </div>
+    <div id="errors"></div>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const messages = document.getElementById('messages');
+        const input = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const errors = document.getElementById('errors');
+
+        function showError(msg) {
+            const err = document.createElement('div');
+            err.textContent = msg;
+            errors.appendChild(err);
+        }
+
+        socket.on('connect', () => {
+            const msg = document.createElement('div');
+            msg.textContent = 'Connected to server';
+            messages.appendChild(msg);
+        });
+
+        socket.on('message', data => {
+            const msg = document.createElement('div');
+            msg.textContent = data;
+            messages.appendChild(msg);
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        socket.on('connect_error', err => {
+            showError('Connection error: ' + err.message);
+        });
+
+        socket.on('error', err => {
+            showError('Socket error: ' + err);
+        });
+
+        sendBtn.onclick = () => {
+            const text = input.value.trim();
+            if (text) {
+                socket.emit('message', text);
+                input.value = '';
+            } else {
+                showError('Cannot send empty message.');
+            }
+        };
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') sendBtn.click();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Puzzled - Collaborative Whiteboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Puzzled - Collaborative Whiteboard</h1>
+        </header>
+
+        <section class="description">
+            <p>Welcome to the semi-anonymous collaborative whiteboard application!</p>
+            <p>This system does not rely on accounts, so you don't have to log in.</p>
+            <p> You can create a new whiteboard or view and edit an existing one by entering its ID.</p>
+        </section>
+
+        <section class="create-whiteboard">
+            <form action="{{ url_for('new_whiteboard') }}" method="post">
+                <label for="whiteboard_name">Whiteboard Name:</label>
+                <input type="text" id="whiteboard_name" name="whiteboard_name" required>
+                <button type="submit">Create Whiteboard</button>
+            </form>
+        </section>
+
+        <section class="join-whiteboard">
+            <form action="/whiteboard/" method="get">
+                <label for="whiteboard_id">Join Whiteboard by ID:</label>
+                <input type="text" id="whiteboard_id" name="whiteboard_id" required>
+                <button type="submit" onclick="this.form.action='/whiteboard/' + document.getElementById('whiteboard_id').value; return true;">Join</button>
+            </form>
+        </section>
+    </div>
+</body>
+</html>
