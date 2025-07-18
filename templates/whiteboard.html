@@ -9,7 +9,7 @@
     <div class="container">
         <h1>{{ whiteboard_name or 'Collaborative Whiteboard' }}</h1>
         Whiteboard ID: {{ whiteboard_id }} <br>
-        
+
         <div class="toolbar">
             <input type="color" id="colorPicker" value="#000000">
             <input type="range" id="lineWidth" min="1" max="20" value="5">
@@ -17,7 +17,7 @@
         </div>
         <canvas id="whiteboard" width="800" height="600"></canvas>
     </div>
-   
+
     <script>
         // Pass whiteboard ID to the frontend
         const WHITEBOARD_ID = "{{ whiteboard_id }}";

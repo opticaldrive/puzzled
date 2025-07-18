@@ -9,7 +9,7 @@ import secrets
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(16) 
-app.config['DEBUG'] = True
+
 
 # Explicitly configure CORS and WebSocket
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)

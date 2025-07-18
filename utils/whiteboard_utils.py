@@ -50,6 +50,8 @@ def clear_whiteboard(id:str):
         print(f"Whiteboard {id} not found. Cannot clear contents.")
 
 
+
+
 def add_drawing_to_whiteboard(id:str, drawing_data:dict):
     """
     Add a drawing to the whiteboard and save it to the JSON
