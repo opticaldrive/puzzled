@@ -1,15 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_socketio import SocketIO, emit, join_room
 import logging
-# from utils.whiteboard_utils import create_whiteboard, get_whiteboard, clear_whiteboard, add_drawing_to_whiteboard
-from utils.noJSON_whiteboard_utils import create_whiteboard, get_whiteboard, clear_whiteboard, add_drawing_to_whiteboard
+from utils.whiteboard_utils import create_whiteboard, get_whiteboard, clear_whiteboard, add_drawing_to_whiteboard
+
 # Enable detailed logging
 logging.basicConfig(level=logging.DEBUG)
 import secrets
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(16) 
-
 
 # Explicitly configure CORS and WebSocket
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
@@ -41,7 +40,7 @@ def whiteboard(id):
     whiteboard_data = get_whiteboard(id)
     
     if whiteboard_data is not None:
-        whiteboard_name = whiteboard_data["name"]
+        whiteboard_name = whiteboard_data.get("name","untitled")
         print("Opening whiteboard: Name:", whiteboard_name, "ID:", id)
         return render_template('whiteboard.html', 
                             whiteboard_id=id, 
@@ -99,7 +98,8 @@ def handle_clear(data):
     clear_whiteboard(whiteboard_id)
     
     # Broadcast clear signal
+    emit
     emit('clear_canvas', data, room=whiteboard_id)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5001, allow_unsafe_werkzeug=True )
+    socketio.run(app, port=36463)
