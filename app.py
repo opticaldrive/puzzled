@@ -1,105 +1,91 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_socketio import SocketIO, emit, join_room
 import logging
-# from utils.whiteboard_utils import create_whiteboard, get_whiteboard, clear_whiteboard, add_drawing_to_whiteboard
-from utils.noJSON_whiteboard_utils import create_whiteboard, get_whiteboard, clear_whiteboard, add_drawing_to_whiteboard
-# Enable detailed logging
-logging.basicConfig(level=logging.DEBUG)
 import secrets
+import time
+import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(16) 
 
+# log the stuff yay
+logging.basicConfig(level=logging.DEBUG)
 
-# Explicitly configure CORS and WebSocket
+# configure websockets and uh cors stuff
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
-# Store drawing histories per whiteboard
-drawing_histories = {}
+# we store chat rooms in here and the messages are inside this
+chat_rooms = {}
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/create_whiteboard', methods=['POST'])
-def new_whiteboard():
-    # Get the whiteboard name from the form
-    whiteboard_name = request.form.get('whiteboard_name')
+@app.route('/create_chatroom', methods=['POST'])
+def new_chatroom():
+    # the person sends the chatroomname
+    chatroom_name = request.form.get('chatroom_name')
     
-    if not whiteboard_name:
-        return "Whiteboard name is required", 400
+    if not chatroom_name:
+        return "You need to put a chatroom name in!", 400
     
-    # Print the form data (for demonstration)
-    print(f"Whiteboard Name Submitted: {whiteboard_name}")
+    # make UUIDs for chatroom names i kept forgetting this lol
+    chatroom_id = str(uuid.uuid4())
     
-    # Create whiteboard and redirect to its page
-    whiteboard_id = create_whiteboard(whiteboard_name)
-    return redirect(url_for('whiteboard', id=whiteboard_id))
+    chat_rooms[chatroom_id] = {
+        'name': chatroom_name,
+        'messages': []
+    }
+    
+    return redirect(url_for('chatroom', id=chatroom_id))
 
-@app.route('/whiteboard/<id>')
-def whiteboard(id):
-    whiteboard_data = get_whiteboard(id)
+@app.route('/chatroom/<id>')
+def chatroom(id):
+    if id not in chat_rooms:
+        return "Chatroom not found :( ", 404
     
-    if whiteboard_data is not None:
-        whiteboard_name = whiteboard_data["name"]
-        print("Opening whiteboard: Name:", whiteboard_name, "ID:", id)
-        return render_template('whiteboard.html', 
-                            whiteboard_id=id, 
-                            whiteboard_name=whiteboard_name)
-    else:
-        return "Whiteboard not found", 404
+    chatroom_name = chat_rooms[id]['name']
+    return render_template('chatroom.html', 
+                           chatroom_id=id, 
+                           chatroom_name=chatroom_name)
 
 @socketio.on('join')
 def on_join(data):
-    print("JOIN REQUEST RECEIVED")
-    whiteboard_id = data['whiteboard_id']
-    join_room(whiteboard_id)
+    chatroom_id = data['chatroom_id']
+    username = data.get('username', 'Anonymous')
     
-    whiteboard_data = get_whiteboard(whiteboard_id)  # Corrected parameter
-    
-    # Send existing drawing history for this whiteboard
-  
-    print("INIT SEND RETRIEVED DRAWING DATA")
-    for drawing in whiteboard_data["contents"]:
-        # wonky formatting bc idk what on earth i did in the js but this works i think
-        emit('draw', {
-            'w': whiteboard_id,  # whiteboard ID
-            'x0': drawing.get('x0', 0),
-            'y0': drawing.get('y0', 0),
-            'x1': drawing.get('x1', 0),
-            'y1': drawing.get('y1', 0),
-            'c': drawing.get('c', '#000000'),  # color
-            'l': drawing.get('l', 2)  # line width
-        }, room=whiteboard_id)
 
-@socketio.on('draw')
-def handle_draw(data):
-    whiteboard_id = data['whiteboard_id']
+    join_room(chatroom_id)
     
-    # Initialize history for this whiteboard if not exists
-    if whiteboard_id not in drawing_histories:
-        drawing_histories[whiteboard_id] = []
-    
-    # Add drawing to history and broadcast
-    drawing_histories[whiteboard_id].append(data)
-    emit('draw', data, room=whiteboard_id)
-    
-    # Optionally save to file
-    add_drawing_to_whiteboard(whiteboard_id, data)
+    if chatroom_id in chat_rooms:
+        for message in chat_rooms[chatroom_id]['messages']:
+            emit('receive_message', message, room=chatroom_id)
 
-@socketio.on('clear_canvas')
+@socketio.on('send_message')
+def handle_message(data):
+    chatroom_id = data['chatroom_id']
+    message = data['message']
+    username = data.get('username', 'Anonymous')
+    
+    message_data = {
+        'username': username,
+        'message': message,
+        'timestamp': int(time.time())
+    }
+    
+    if chatroom_id in chat_rooms:
+        chat_rooms[chatroom_id]['messages'].append(message_data)
+    
+    emit('receive_message', message_data, room=chatroom_id)
+
+@socketio.on('clear_chat')
 def handle_clear(data):
-    whiteboard_id = data['whiteboard_id']
+    chatroom_id = data['chatroom_id']
     
-    # Clear drawing history for this whiteboard
-    if whiteboard_id in drawing_histories:
-        drawing_histories[whiteboard_id].clear()
+    if chatroom_id in chat_rooms:
+        chat_rooms[chatroom_id]['messages'].clear()
     
-    # Clear the whiteboard in storage
-    clear_whiteboard(whiteboard_id)
-    
-    # Broadcast clear signal
-    emit('clear_canvas', data, room=whiteboard_id)
+    emit('clear_chat', room=chatroom_id)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5001, allow_unsafe_werkzeug=True )
+    socketio.run(app, debug=True, port=5002, allow_unsafe_werkzeug=True)
